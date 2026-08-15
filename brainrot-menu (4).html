@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brainrot Marktplatz</title>
+<style>
+  :root{
+    --bg:#0b0b0e;
+    --card:#17171c;
+    --card-hover:#1e1e25;
+    --line: rgba(255,255,255,0.08);
+    --text:#f2f2f0;
+    --text-dim:#9a9aa2;
+    --accent:#7CFC6E;
+    --accent-dim:rgba(124,252,110,0.15);
+    --tomato:#FF4B3E;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle at 20% 0%, rgba(124,252,110,0.06), transparent 45%),
+      radial-gradient(circle at 85% 100%, rgba(124,252,110,0.05), transparent 45%),
+      var(--bg);
+    color:var(--text);
+    font-family:-apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+    min-height:100vh;
+    padding-bottom:80px;
+  }
+  .wrap{max-width:1200px;margin:0 auto;padding:0 20px;}
+
+  header{
+    padding:44px 20px 26px;
+    text-align:center;
+  }
+  h1{
+    font-family:'Arial Black', 'Impact', sans-serif;
+    font-size:clamp(26px, 5vw, 40px);
+    margin:0;
+    color:var(--text);
+    letter-spacing:0.5px;
+    background:linear-gradient(180deg, #ffffff 0%, #b9b9c2 100%);
+    -webkit-background-clip:text;
+    background-clip:text;
+    -webkit-text-fill-color:transparent;
+  }
+  .subtitle{
+    font-size:14px;
+    color:var(--text-dim);
+    margin-top:8px;
+  }
+  .tag{
+    display:inline-block;
+    background:var(--accent-dim);
+    color:var(--accent);
+    font-weight:700;
+    font-size:11px;
+    padding:5px 14px;
+    border-radius:20px;
+    margin-top:16px;
+    letter-spacing:0.5px;
+    border:1px solid rgba(124,252,110,0.3);
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));
+    gap:16px;
+    margin-top:16px;
+  }
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:16px;
+    cursor:pointer;
+    transition:transform 0.25s cubic-bezier(.2,.8,.2,1), box-shadow 0.25s ease, border-color 0.25s ease;
+    position:relative;
+    opacity:0;
+    transform:translateY(14px);
+    animation:cardIn 0.5s ease forwards;
+  }
+  @keyframes cardIn{
+    to{opacity:1; transform:translateY(0);}
+  }
+  .card:hover{
+    transform:translateY(-6px);
+    border-color:rgba(124,252,110,0.35);
+    box-shadow:0 14px 30px rgba(0,0,0,0.45), 0 0 0 1px rgba(124,252,110,0.08);
+  }
+  .card:active{transform:translateY(-2px) scale(0.98);}
+
+  .photo-wrap{
+    width:100%;
+    aspect-ratio:1/1;
+    border-radius:12px;
+    overflow:hidden;
+    background:#0a0a0c;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-bottom:12px;
+    position:relative;
+  }
+  .photo-wrap img{
+    width:100%; height:100%; object-fit:cover;
+    transition:transform 0.4s ease;
+  }
+  .card:hover .photo-wrap img{transform:scale(1.08);}
+  .photo-wrap .ph-icon{font-size:44px; opacity:0.4;}
+
+  .name{
+    font-weight:500;
+    font-size:14px;
+    margin:0 0 6px;
+    color:var(--text);
+    line-height:1.3;
+  }
+  .price{
+    font-weight:700;
+    font-size:16px;
+    margin:0;
+    color:var(--accent);
+  }
+
+  .del-btn{
+    position:absolute;
+    top:10px; right:10px;
+    background:rgba(0,0,0,0.65);
+    color:#fff;
+    border:none;
+    width:26px;height:26px;
+    border-radius:50%;
+    cursor:pointer;
+    font-size:13px;
+    display:none;
+    line-height:1;
+    z-index:2;
+    transition:background 0.15s ease, transform 0.15s ease;
+  }
+  .del-btn:hover{background:var(--tomato); transform:scale(1.1);}
+  .admin-on .del-btn{display:block;}
+
+  .empty{
+    text-align:center;
+    padding:70px 20px;
+    color:var(--text-dim);
+    font-size:15px;
+  }
+
+  .fab{
+    position:fixed;
+    bottom:22px; right:22px;
+    background:var(--accent);
+    color:#0d1a0a;
+    border:none;
+    width:54px;height:54px;
+    border-radius:50%;
+    font-size:24px;
+    font-weight:700;
+    cursor:pointer;
+    z-index:50;
+    box-shadow:0 6px 20px rgba(124,252,110,0.3);
+    transition:transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .fab:hover{transform:scale(1.08) rotate(12deg); box-shadow:0 8px 26px rgba(124,252,110,0.45);}
+  .fab:active{transform:scale(0.95);}
+
+  .overlay{
+    display:none;
+    position:fixed; inset:0;
+    background:rgba(0,0,0,0.7);
+    backdrop-filter:blur(4px);
+    z-index:100;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    opacity:0;
+    transition:opacity 0.25s ease;
+  }
+  .overlay.open{display:flex;}
+  .overlay.show{opacity:1;}
+
+  .panel{
+    background:var(--card);
+    color:var(--text);
+    border:1px solid var(--line);
+    border-radius:16px;
+    width:100%;
+    max-width:400px;
+    max-height:85vh;
+    overflow-y:auto;
+    padding:22px;
+    position:relative;
+    transform:scale(0.92) translateY(10px);
+    opacity:0;
+    transition:transform 0.28s cubic-bezier(.2,.9,.3,1.2), opacity 0.25s ease;
+  }
+  .overlay.show .panel{transform:scale(1) translateY(0); opacity:1;}
+
+  .panel h2{
+    font-family:'Arial Black', 'Impact', sans-serif;
+    font-size:17px;
+    margin:0 0 14px;
+  }
+  .panel-close{
+    position:absolute; top:14px; right:14px;
+    background:rgba(255,255,255,0.06); border:none; font-size:18px; cursor:pointer; color:var(--text);
+    width:30px; height:30px; border-radius:50%;
+    transition:background 0.15s ease;
+  }
+  .panel-close:hover{background:rgba(255,255,255,0.14);}
+  .tabs{display:flex; gap:8px; margin-bottom:16px;}
+  .tab-btn{
+    flex:1;
+    background:#0d0d10;
+    border:1px solid var(--line);
+    padding:8px;
+    border-radius:8px;
+    font-weight:700;
+    font-size:12px;
+    cursor:pointer;
+    color:var(--text-dim);
+    transition:background 0.15s ease, color 0.15s ease;
+  }
+  .tab-btn.active{background:var(--accent); color:#0d1a0a; border-color:var(--accent);}
+  .tab-content{display:none;}
+  .tab-content.active{display:block; animation:fadeUp 0.25s ease;}
+  @keyframes fadeUp{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+  label{display:block; font-size:12px; font-weight:700; margin:12px 0 5px; color:var(--text-dim);}
+  input[type=text], input[type=number], input[type=password]{
+    width:100%;
+    padding:9px 10px;
+    border-radius:8px;
+    border:1.5px solid var(--line);
+    font-family:-apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+    font-size:14px;
+    background:#0d0d10;
+    color:var(--text);
+    transition:border-color 0.15s ease;
+  }
+  input[type=text]:focus, input[type=number]:focus, input[type=password]:focus{
+    outline:none; border-color:var(--accent);
+  }
+  input[type=file]{font-size:12px; margin-top:2px; color:var(--text-dim);}
+  .preview{
+    margin-top:10px;
+    width:100%;
+    max-width:140px;
+    border-radius:8px;
+    display:none;
+  }
+  .submit-btn{
+    width:100%;
+    margin-top:16px;
+    background:var(--accent);
+    color:#0d1a0a;
+    font-weight:700;
+    border:none;
+    border-radius:8px;
+    padding:10px 0;
+    cursor:pointer;
+    font-size:14px;
+    transition:transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .submit-btn:hover:not(:disabled){transform:translateY(-1px); box-shadow:0 6px 16px rgba(124,252,110,0.25);}
+  .submit-btn:active:not(:disabled){transform:translateY(0);}
+  .submit-btn:disabled{opacity:0.5; cursor:not-allowed;}
+  .err{color:var(--tomato); font-size:12px; margin-top:6px; display:none;}
+  .hint{font-size:11px; color:var(--text-dim); margin-top:4px;}
+  .lock-list{margin-top:16px; border-top:1px dashed var(--line); padding-top:10px;}
+  .lock-item{
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:13px; padding:8px 0; border-bottom:1px solid var(--line);
+  }
+  .lock-item button{
+    background:none; border:none; color:var(--tomato); cursor:pointer; font-size:13px;
+  }
+  .status-msg{font-size:12px; margin-top:8px; color:var(--accent); display:none;}
+
+  .detail-panel{
+    max-width:420px;
+    text-align:center;
+    padding:0;
+    overflow:hidden;
+  }
+  .detail-photo{
+    width:100%;
+    aspect-ratio:1/1;
+    background:#0a0a0c;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+  }
+  .detail-photo img{
+    width:100%; height:100%; object-fit:cover;
+    animation:zoomIn 0.4s ease;
+  }
+  @keyframes zoomIn{from{transform:scale(1.15); opacity:0.4;} to{transform:scale(1); opacity:1;}}
+  .detail-photo .ph-icon{font-size:70px; opacity:0.4;}
+  .detail-body{padding:24px;}
+  .detail-name{
+    font-family:'Arial Black', 'Impact', sans-serif;
+    font-size:17px;
+    margin:0 0 8px;
+  }
+  .detail-price{
+    font-size:24px;
+    font-weight:700;
+    color:var(--accent);
+    margin:0 0 18px;
+  }
+  .buy-btn{
+    display:block;
+    width:100%;
+    text-align:center;
+    text-decoration:none;
+    background:var(--accent);
+    color:#0d1a0a;
+    font-weight:700;
+    font-size:15px;
+    padding:14px 0;
+    border-radius:12px;
+    cursor:pointer;
+    transition:transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow:0 6px 18px rgba(124,252,110,0.25);
+  }
+  .buy-btn:hover{transform:translateY(-2px); box-shadow:0 10px 24px rgba(124,252,110,0.35);}
+  .buy-btn:active{transform:translateY(0);}
+  .detail-close{
+    position:absolute; top:14px; right:14px;
+    background:rgba(0,0,0,0.5);
+    border:none; font-size:18px; cursor:pointer; color:#fff;
+    width:32px; height:32px; border-radius:50%;
+    z-index:2;
+    transition:background 0.15s ease, transform 0.15s ease;
+  }
+  .detail-close:hover{background:rgba(0,0,0,0.75); transform:rotate(90deg);}
+</style>
+</head>
+<body>
+
+<header>
+  <h1 id="site-title">BRAINROT MARKTPLATZ</h1>
+  <p class="subtitle">frische brainrots aus der community</p>
+  <span class="tag" id="community-tag">COMMUNITY EDITION</span>
+</header>
+
+<div class="wrap">
+  <div id="grid" class="grid"></div>
+  <div id="empty" class="empty" style="display:none;">noch nix da. sei der erste chef und füg was hinzu 🍝</div>
+</div>
+
+<button class="fab" id="fab" title="Admin">🔧</button>
+
+<div class="overlay" id="detail-overlay">
+  <div class="panel detail-panel">
+    <button class="detail-close" id="detail-close">✕</button>
+    <div class="detail-photo" id="detail-photo"></div>
+    <div class="detail-body">
+      <p class="detail-name" id="detail-name"></p>
+      <p class="detail-price" id="detail-price"></p>
+      <a class="buy-btn" id="detail-buy" href="#" target="_blank" rel="noopener">Kaufen 🛒</a>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="panel">
+    <button class="panel-close" id="panel-close">✕</button>
+
+    <div id="lock-screen">
+      <h2>Admin-Zugang</h2>
+      <label>Code</label>
+      <input type="password" id="admin-pass" placeholder="dein admin-code">
+      <div class="err" id="lock-err">Falscher Code.</div>
+      <button class="submit-btn" id="unlock-btn">Freischalten</button>
+      <p class="hint">Standard-Code: brainrot2026 — änder ihn im Code (Konstante ADMIN_CODE), bevor du den Link verschickst.</p>
+    </div>
+
+    <div id="admin-screen" style="display:none;">
+      <h2>Admin-Panel</h2>
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="add">➕ Item</button>
+        <button class="tab-btn" data-tab="settings">⚙️ Einstellungen</button>
+        <button class="tab-btn" data-tab="manage">📋 Liste</button>
+      </div>
+
+      <div class="tab-content active" id="tab-add">
+        <label>Foto</label>
+        <input type="file" id="item-photo" accept="image/*">
+        <img id="item-preview" class="preview">
+        <label>Name (z.B. DRAGON CANELLONI)</label>
+        <input type="text" id="item-name" placeholder="DRAGON CANELLONI">
+        <label>Preis (€)</label>
+        <input type="number" id="item-price" placeholder="20" min="0" step="0.5">
+        <div class="err" id="add-err"></div>
+        <button class="submit-btn" id="add-btn">Hinzufügen</button>
+      </div>
+
+      <div class="tab-content" id="tab-settings">
+        <label>Menü-Titel</label>
+        <input type="text" id="set-title" placeholder="BRAINROT MARKTPLATZ">
+        <label>Tag / Untertitel-Badge</label>
+        <input type="text" id="set-tag" placeholder="COMMUNITY EDITION">
+        <label>Discord-Einladungslink</label>
+        <input type="text" id="set-discord" placeholder="https://discord.gg/deincode">
+        <div class="err" id="settings-err"></div>
+        <button class="submit-btn" id="save-settings-btn">Speichern</button>
+        <div class="status-msg" id="settings-status">Gespeichert.</div>
+      </div>
+
+      <div class="tab-content" id="tab-manage">
+        <div class="lock-list" id="manage-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ADMIN_CODE = "brainrot2026";
+let unlocked = false;
+let discordLink = "https://discord.gg/dein-invite";
+let items = [];
+
+async function loadSettings(){
+  try{
+    const r = await window.storage.get('settings', true);
+    if(r && r.value){
+      const s = JSON.parse(r.value);
+      if(s.title) document.getElementById('site-title').textContent = s.title;
+      if(s.tag) document.getElementById('community-tag').textContent = s.tag;
+      if(s.discordLink) discordLink = s.discordLink;
+    }
+  }catch(e){}
+  document.getElementById('set-title').value = document.getElementById('site-title').textContent;
+  document.getElementById('set-tag').value = document.getElementById('community-tag').textContent;
+  document.getElementById('set-discord').value = discordLink;
+}
+
+async function saveSettings(){
+  const title = document.getElementById('set-title').value.trim();
+  const tag = document.getElementById('set-tag').value.trim();
+  const link = document.getElementById('set-discord').value.trim();
+  const errEl = document.getElementById('settings-err');
+  if(!link || !link.startsWith('http')){
+    errEl.textContent = 'Bitte einen gültigen Discord-Link eingeben (https://...).';
+    errEl.style.display = 'block';
+    return;
+  }
+  errEl.style.display = 'none';
+  const data = {title: title || 'BRAINROT MARKTPLATZ', tag: tag || 'COMMUNITY EDITION', discordLink: link};
+  try{
+    await window.storage.set('settings', JSON.stringify(data), true);
+    document.getElementById('site-title').textContent = data.title;
+    document.getElementById('community-tag').textContent = data.tag;
+    discordLink = data.discordLink;
+    renderGrid();
+    const statusEl = document.getElementById('settings-status');
+    statusEl.style.display = 'block';
+    setTimeout(()=>statusEl.style.display='none', 2000);
+  }catch(e){
+    errEl.textContent = 'Speichern fehlgeschlagen. Nochmal versuchen.';
+    errEl.style.display = 'block';
+  }
+}
+
+async function loadItems(){
+  items = [];
+  try{
+    const idx = await window.storage.get('item-index', true);
+    const ids = idx && idx.value ? JSON.parse(idx.value) : [];
+    for(const id of ids){
+      try{
+        const it = await window.storage.get('item:' + id, true);
+        if(it && it.value) items.push(JSON.parse(it.value));
+      }catch(e){}
+    }
+  }catch(e){}
+  renderGrid();
+}
+
+function escapeHtml(s){
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function renderGrid(){
+  const grid = document.getElementById('grid');
+  const empty = document.getElementById('empty');
+  grid.innerHTML = '';
+  grid.classList.toggle('admin-on', unlocked);
+  if(items.length === 0){
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  items.slice().reverse().forEach((item, i) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.style.animationDelay = (i * 0.05) + 's';
+    const photoHtml = item.image
+      ? `<img src="${item.image}" alt="${escapeHtml(item.name)}">`
+      : `<span class="ph-icon">🍝</span>`;
+    card.innerHTML = `
+      ${unlocked ? `<button class="del-btn" data-id="${item.id}">✕</button>` : ''}
+      <div class="photo-wrap">${photoHtml}</div>
+      <p class="name">${escapeHtml(item.name)}</p>
+      <p class="price">${Number(item.price).toFixed(2)} €</p>
+    `;
+    card.addEventListener('click', (e)=>{
+      if(e.target.classList.contains('del-btn')) return;
+      openDetail(item);
+    });
+    grid.appendChild(card);
+  });
+  grid.querySelectorAll('.del-btn').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{ e.stopPropagation(); deleteItem(btn.dataset.id); });
+  });
+}
+
+function openOverlay(el){
+  el.classList.add('open');
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>el.classList.add('show'));
+  });
+}
+function closeOverlay(el){
+  el.classList.remove('show');
+  setTimeout(()=>el.classList.remove('open'), 250);
+}
+
+function openDetail(item){
+  const photoEl = document.getElementById('detail-photo');
+  photoEl.innerHTML = item.image
+    ? `<img src="${item.image}" alt="${escapeHtml(item.name)}">`
+    : `<span class="ph-icon">🍝</span>`;
+  document.getElementById('detail-name').textContent = item.name;
+  document.getElementById('detail-price').textContent = Number(item.price).toFixed(2) + ' €';
+  document.getElementById('detail-buy').href = discordLink;
+  openOverlay(document.getElementById('detail-overlay'));
+}
+document.getElementById('detail-close').addEventListener('click', ()=>{
+  closeOverlay(document.getElementById('detail-overlay'));
+});
+document.getElementById('detail-overlay').addEventListener('click', (e)=>{
+  if(e.target.id === 'detail-overlay') closeOverlay(document.getElementById('detail-overlay'));
+});
+
+async function addItem(){
+  const errEl = document.getElementById('add-err');
+  errEl.style.display = 'none';
+  const nameEl = document.getElementById('item-name');
+  const priceEl = document.getElementById('item-price');
+  const fileEl = document.getElementById('item-photo');
+  const name = nameEl.value.trim();
+  const price = priceEl.value;
+
+  if(!name){ errEl.textContent = 'Bitte einen Namen eingeben.'; errEl.style.display='block'; return; }
+  if(price === '' || isNaN(price) || Number(price) < 0){ errEl.textContent = 'Bitte einen gültigen Preis eingeben.'; errEl.style.display='block'; return; }
+
+  const btn = document.getElementById('add-btn');
+  btn.disabled = true;
+  btn.textContent = 'Wird hinzugefügt...';
+
+  let image = null;
+  if(fileEl.files && fileEl.files[0]){
+    try{
+      image = await fileToDataUrl(fileEl.files[0]);
+    }catch(e){}
+  }
+
+  const id = 'i' + Date.now() + Math.floor(Math.random()*1000);
+  const item = {id, name, price: Number(price), image, createdAt: Date.now()};
+
+  try{
+    await window.storage.set('item:' + id, JSON.stringify(item), true);
+    const idx = await window.storage.get('item-index', true).catch(()=>null);
+    const ids = idx && idx.value ? JSON.parse(idx.value) : [];
+    ids.push(id);
+    await window.storage.set('item-index', JSON.stringify(ids), true);
+    items.push(item);
+    renderGrid();
+    nameEl.value = ''; priceEl.value = ''; fileEl.value = '';
+    document.getElementById('item-preview').style.display = 'none';
+  }catch(e){
+    errEl.textContent = 'Hochladen fehlgeschlagen. Foto evtl. zu groß — versuch ein kleineres Bild.';
+    errEl.style.display = 'block';
+  }
+  btn.disabled = false;
+  btn.textContent = 'Hinzufügen';
+}
+
+async function deleteItem(id){
+  try{
+    await window.storage.delete('item:' + id, true);
+    const idx = await window.storage.get('item-index', true).catch(()=>null);
+    let ids = idx && idx.value ? JSON.parse(idx.value) : [];
+    ids = ids.filter(x => x !== id);
+    await window.storage.set('item-index', JSON.stringify(ids), true);
+    items = items.filter(i => i.id !== id);
+    renderGrid();
+    renderManageList();
+  }catch(e){}
+}
+
+function renderManageList(){
+  const list = document.getElementById('manage-list');
+  if(items.length === 0){ list.innerHTML = '<p class="hint">Noch keine Items.</p>'; return; }
+  list.innerHTML = items.map(i => `
+    <div class="lock-item">
+      <span>${escapeHtml(i.name)} — ${Number(i.price).toFixed(2)} €</span>
+      <button data-id="${i.id}">löschen</button>
+    </div>
+  `).join('');
+  list.querySelectorAll('button').forEach(btn=>{
+    btn.addEventListener('click', ()=>deleteItem(btn.dataset.id));
+  });
+}
+
+function fileToDataUrl(file){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+document.getElementById('item-photo').addEventListener('change', (e)=>{
+  const f = e.target.files[0];
+  const prev = document.getElementById('item-preview');
+  if(f){
+    const reader = new FileReader();
+    reader.onload = ()=>{ prev.src = reader.result; prev.style.display='block'; };
+    reader.readAsDataURL(f);
+  } else {
+    prev.style.display = 'none';
+  }
+});
+
+document.getElementById('fab').addEventListener('click', ()=>{
+  openOverlay(document.getElementById('overlay'));
+  if(unlocked){
+    document.getElementById('lock-screen').style.display = 'none';
+    document.getElementById('admin-screen').style.display = 'block';
+    renderManageList();
+  }
+});
+document.getElementById('panel-close').addEventListener('click', ()=>{
+  closeOverlay(document.getElementById('overlay'));
+});
+document.getElementById('overlay').addEventListener('click', (e)=>{
+  if(e.target.id === 'overlay') closeOverlay(document.getElementById('overlay'));
+});
+
+document.getElementById('unlock-btn').addEventListener('click', ()=>{
+  const val = document.getElementById('admin-pass').value;
+  const errEl = document.getElementById('lock-err');
+  if(val === ADMIN_CODE){
+    unlocked = true;
+    document.getElementById('lock-screen').style.display = 'none';
+    document.getElementById('admin-screen').style.display = 'block';
+    renderGrid();
+    renderManageList();
+  } else {
+    errEl.style.display = 'block';
+  }
+});
+
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    if(btn.dataset.tab === 'manage') renderManageList();
+  });
+});
+
+document.getElementById('add-btn').addEventListener('click', addItem);
+document.getElementById('save-settings-btn').addEventListener('click', saveSettings);
+
+(async function init(){
+  await loadSettings();
+  await loadItems();
+})();
+</script>
+</body>
+</html>
